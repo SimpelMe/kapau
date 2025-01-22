@@ -100,14 +100,29 @@ def analyze_audio(input_files, threshold, hop_time, threshold_time_gap, show_plo
 
 def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
     """
-    Fasse nahe beieinander liegende Anomalien zusammen.
+    Identifiziert die größten Sprünge innerhalb benachbarter Anomalien und gibt diese als Anomalien aus.
     """
     filtered_anomalies = []
     last_time = -float('inf')  # Initialer Vergleichszeitpunkt
+    current_window = []  # Liste von Anomalien im aktuellen Zeitfenster
     for anomaly in anomalies:
-        if anomaly[1] - last_time > threshold_time_gap:
-            filtered_anomalies.append(anomaly)
-            last_time = anomaly[1]
+        if anomaly[1] - last_time <= threshold_time_gap:
+            # Anomalie gehört zum aktuellen Zeitfenster
+            current_window.append(anomaly)
+        else:
+            # Wenn das Zeitfenster überschritten wurde, den größten Sprung im aktuellen Fenster ermitteln
+            if current_window:
+                max_diff_anomaly = max(current_window, key=lambda x: x[3])  # Anomalie mit dem größten Differenzwert
+                filtered_anomalies.append(max_diff_anomaly)
+            # Reset für das nächste Zeitfenster
+            current_window = [anomaly]
+        last_time = anomaly[1]
+
+    # Den letzten "Fenster"-Sprung auch hinzufügen, falls es noch Anomalien gibt
+    if current_window:
+        max_diff_anomaly = max(current_window, key=lambda x: x[3])
+        filtered_anomalies.append(max_diff_anomaly)
+
     return filtered_anomalies
 
 def format_time(seconds):

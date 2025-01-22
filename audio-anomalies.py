@@ -82,7 +82,7 @@ def analyze_audio(input_files, threshold, hop_time, threshold_time_gap, show_plo
     # Ergebnisse anzeigen
     if anomalies:
         print("Anomalies detected!")
-        print(f"{'Time (h:mm:ss.x)':<15}{'Channel':<10}{'Spectral Difference (dB)'}")
+        print(f"{'h:mm:ss.xx':<15}{'Channel':<10}{'Spectral Difference (dB)'}")
         for anomaly in anomalies:
             print(f"{anomaly[0]:<15}{anomaly[2]:<10}{anomaly[3]:.2f}")
     else:
@@ -131,8 +131,8 @@ def format_time(seconds):
     """
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
-    seconds = round(seconds % 60, 1)  # Runden auf 1 Nachkommastelle
-    return f"{hours:01}:{minutes:02}:{seconds:04.1f}"  # Format mit 1 Nachkommastelle
+    seconds = round(seconds % 60, 2)  # Runden auf 2 Nachkommastellen
+    return f"{hours:01}:{minutes:02}:{seconds:04.2f}"  # Format mit 2 Nachkommastelle
 
 # Hauptprogramm starten
 if __name__ == "__main__":

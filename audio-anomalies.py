@@ -11,7 +11,6 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Detect anomalies in a stereo WAV file or two mono WAV files based on spectral differences.")
     parser.add_argument("input_file", nargs="+", help="Path to the WAV file(s) to analyze. Provide one stereo file or two mono files.")
     parser.add_argument("--threshold", type=float, default=60.0, help="Spectral difference threshold (default: 60.0 dB).")
-    parser.add_argument("--hop_time", type=float, default=0.2, help="Time between analysis windows (default: 0.2 s).")
     parser.add_argument("--threshold_time_gap", type=float, default=0.5, help="Time gap to ignore nearby anomalies (default: 0.5 s).")
     parser.add_argument("--plot", action="store_true", help="Show a plot of the spectral differences.")
     return parser.parse_args()
@@ -43,7 +42,7 @@ def load_audio_files(input_files):
     else:
         raise ValueError("Provide either one stereo WAV file or two mono WAV files.")
 
-def analyze_audio(input_files, threshold, hop_time, threshold_time_gap, show_plot):
+def analyze_audio(input_files, threshold, threshold_time_gap, show_plot):
     """
     Analysiert die Audiodaten und erkennt Anomalien basierend auf spektralen Unterschieden.
     """
@@ -63,7 +62,6 @@ def analyze_audio(input_files, threshold, hop_time, threshold_time_gap, show_plo
 
     # Anomalien erkennen und filtern
     anomalies = []
-    hop_length = int(hop_time * sr)  # Berechne hop_length aus der Zeitauflösung
 
     for t in range(spectral_diff.shape[1]):
         if spectral_diff[:, t].max() > threshold:
@@ -139,7 +137,7 @@ if __name__ == "__main__":
     try:
         # Argumente parsen und Analyse starten
         args = parse_arguments()
-        analyze_audio(args.input_file, args.threshold, args.hop_time, args.threshold_time_gap, args.plot)
+        analyze_audio(args.input_file, args.threshold, args.threshold_time_gap, args.plot)
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)

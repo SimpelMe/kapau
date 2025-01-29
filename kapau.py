@@ -122,17 +122,18 @@ def analyze_audio(input_files, threshold, threshold_time_gap, show_plot):
 
         # Spektrale Differenz anzeigen
         librosa.display.specshow(spectral_diff, sr=sr, x_axis="time", y_axis="log", ax=ax1)
-        ax1.set_title("Spectral Difference (Left vs Right)")
+        ax1.set_title("Spectral Difference")
         ax1.set_xlabel("Time")
         ax1.set_ylabel("Frequency")
         
         # Korrelation anzeigen
         times = np.arange(len(correlation))
-        ax2.plot(times, correlation, label="Correlation (Left vs Right)")
+        ax2.plot(times, correlation)
         ax2.set_title("Correlation over Time")
         ax2.set_xlabel("Time (s)")
         ax2.set_ylabel("Correlation")
-        ax2.legend()
+        ax2.set_xlim([np.min(times), np.max(times)])
+        ax2.set_ylim([-1, 1])
 
         # Layout anpassen
         plt.tight_layout()

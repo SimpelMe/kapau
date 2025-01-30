@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
@@ -110,9 +111,9 @@ def analyze_audio(input_files, threshold, threshold_time_gap, show_plot):
     # Ergebnisse anzeigen
     if anomalies:
         print("Anomalies detected!")
-        print(f"{'h:mm:ss.xx':<15}{'Channel':<10}{'Spectral Difference (dB)':<25}{'Correlation'}")
+        print(f"{'h:mm:ss.xx':<15}{'Channel':<10}{'Spec. Diff (dB)':<16}{'Correlation'}")
         for anomaly in anomalies:
-            print(f"{anomaly[0]:<15}{anomaly[2]:<10}{anomaly[3]:<25.2f}{anomaly[4]:.6f}")
+            print(f"{anomaly[0]:<15}{anomaly[2]:<10}{anomaly[3]:<16.2f}{anomaly[4]:.6f}")
     else:
         print("No significant anomalies detected.")
 
@@ -180,6 +181,9 @@ if __name__ == "__main__":
     try:
         # Argumente parsen und Analyse starten
         args = parse_arguments()
+        print(f"")
+        pathwofilename, filename = os.path.split(args.input_file[0])
+        print(f"{filename}")
         analyze_audio(args.input_file, args.threshold, args.threshold_time_gap, args.plot)
     except Exception as e:
         print(f"Error: {e}")

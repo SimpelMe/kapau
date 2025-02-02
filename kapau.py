@@ -11,7 +11,7 @@ def parse_arguments():
     parser.add_argument("input_file", nargs="+", help="Path to the WAV file(s) to analyze. Provide one stereo file or two mono files.")
     parser.add_argument("--threshold", type=float, default=60.0, help="Spectral difference threshold (default: 60.0 dB).")
     parser.add_argument("--threshold_time_gap", type=float, default=5.0, help="Time gap to ignore nearby anomalies (default: 5.0 s).")
-    parser.add_argument('--quiet', action='store_true', default=False, help="Output only timestamps with anomalies (default: false).")
+    parser.add_argument('--harvester', action='store_true', default=False, help="Output pure timestamps for harvester (default: false).")
     return parser.parse_args()
 
 def load_audio_files(input_files):
@@ -64,7 +64,7 @@ def calculate_correlation_formel(signal1, signal2):
     orth_factor = inner_product / square_product
     return round(orth_factor, 6)
 
-def analyze_audio(input_files, threshold, threshold_time_gap, quiet):
+def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
     """
     Analysiert die Audiodaten und erkennt Anomalien basierend auf spektralen Unterschieden.
     """
@@ -80,7 +80,7 @@ def analyze_audio(input_files, threshold, threshold_time_gap, quiet):
     spectral_diff = np.abs(S_left - S_right)
     max_diff = np.max(spectral_diff)
 
-    if not args.quiet:
+    if not args.harvester:
         print(f"Max spectral difference: {max_diff:.2f} dB")
 
     # Korrelation berechnen
@@ -109,17 +109,17 @@ def analyze_audio(input_files, threshold, threshold_time_gap, quiet):
 
     # Ergebnisse anzeigen
     if anomalies:
-        if not quiet:
+        if not harvester:
             print("Anomalies detected!")
             print(f"{'h:mm:ss.xx':<15}{'Channel':<10}{'Spec. Diff (dB)':<16}{'Correlation'}")
         for anomaly in anomalies:
-            if quiet:
+            if harvester:
                 print(f"{anomaly[0]}")
             else:
                 print(f"{anomaly[0]:<15}{anomaly[2]:<10}{anomaly[3]:<16.2f}{anomaly[4]:.6f}")
         sys.exit(23)
     else:
-        if quiet:
+        if harvester:
             print(0)
         else:
             print("No significant anomalies detected.")
@@ -165,11 +165,11 @@ if __name__ == "__main__":
     try:
         # Argumente parsen und Analyse starten
         args = parse_arguments()
-        if not args.quiet:
+        if not args.harvester:
             print(f"")
             pathwofilename, filename = os.path.split(args.input_file[0])
             print(f"{filename}")
-        analyze_audio(args.input_file, args.threshold, args.threshold_time_gap, args.quiet)
+        analyze_audio(args.input_file, args.threshold, args.threshold_time_gap, args.harvester)
         sys.exit(0)
     except Exception as e:
         print(f"Error: {e}")

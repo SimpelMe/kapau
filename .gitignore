@@ -1,5 +1,20 @@
 *.txt
 __pycache__/*
+
+# files and folder created by pyinstaller
 build/*
 dist/*
 *.spec
+
+# files and folder created for python environment (venv)
+# see https://docs.python.org/3/library/venv.html
+bin/*
+include/*
+lib/*
+pyvenv.cfg
+
+# temp files for development
+corr_tester.py
+modules-to-uninstall.py
+test-burst-folder.sh
+

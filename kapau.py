@@ -1,8 +1,6 @@
 import numpy as np
 import os
 import librosa
-import librosa.display
-import matplotlib.pyplot as plt
 import argparse
 import soundfile as sf
 import sys
@@ -13,7 +11,6 @@ def parse_arguments():
     parser.add_argument("input_file", nargs="+", help="Path to the WAV file(s) to analyze. Provide one stereo file or two mono files.")
     parser.add_argument("--threshold", type=float, default=60.0, help="Spectral difference threshold (default: 60.0 dB).")
     parser.add_argument("--threshold_time_gap", type=float, default=5.0, help="Time gap to ignore nearby anomalies (default: 5.0 s).")
-    parser.add_argument("--plot", action="store_true", help="Show a plot of the spectral differences and correlations.")
     return parser.parse_args()
 
 def load_audio_files(input_files):
@@ -66,7 +63,7 @@ def calculate_correlation_formel(signal1, signal2):
     orth_factor = inner_product / square_product
     return round(orth_factor, 6)
 
-def analyze_audio(input_files, threshold, threshold_time_gap, show_plot):
+def analyze_audio(input_files, threshold, threshold_time_gap):
     """
     Analysiert die Audiodaten und erkennt Anomalien basierend auf spektralen Unterschieden.
     """
@@ -117,29 +114,6 @@ def analyze_audio(input_files, threshold, threshold_time_gap, show_plot):
     else:
         print("No significant anomalies detected.")
 
-    # Optional: Plot anzeigen
-    if show_plot:
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6))
-
-        # Spektrale Differenz anzeigen
-        librosa.display.specshow(spectral_diff, sr=sr, x_axis="time", y_axis="log", ax=ax1)
-        ax1.set_title("Spectral Difference")
-        ax1.set_xlabel("Time")
-        ax1.set_ylabel("Frequency")
-        
-        # Korrelation anzeigen
-        times = np.arange(len(correlation))
-        ax2.plot(times, correlation)
-        ax2.set_title("Correlation over Time")
-        ax2.set_xlabel("Time (s)")
-        ax2.set_ylabel("Correlation")
-        ax2.set_xlim([np.min(times), np.max(times)])
-        ax2.set_ylim([-1, 1])
-
-        # Layout anpassen
-        plt.tight_layout()
-        plt.show()
-
 def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
     """
     Identifiziert die größten Sprünge innerhalb benachbarter Anomalien und gibt diese als Anomalien aus.
@@ -184,7 +158,7 @@ if __name__ == "__main__":
         print(f"")
         pathwofilename, filename = os.path.split(args.input_file[0])
         print(f"{filename}")
-        analyze_audio(args.input_file, args.threshold, args.threshold_time_gap, args.plot)
+        analyze_audio(args.input_file, args.threshold, args.threshold_time_gap)
     except Exception as e:
         print(f"Error: {e}")
         sys.exit(1)

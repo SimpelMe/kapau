@@ -12,7 +12,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Detect anomalies in a stereo WAV file or two mono WAV files based on spectral differences.")
     parser.add_argument("input_file", nargs="+", help="Path to the WAV file(s) to analyze. Provide one stereo file or two mono files.")
     parser.add_argument("--threshold", type=float, default=60.0, help="Spectral difference threshold (default: 60.0 dB).")
-    parser.add_argument("--threshold_time_gap", type=float, default=0.5, help="Time gap to ignore nearby anomalies (default: 0.5 s).")
+    parser.add_argument("--threshold_time_gap", type=float, default=5.0, help="Time gap to ignore nearby anomalies (default: 5.0 s).")
     parser.add_argument("--plot", action="store_true", help="Show a plot of the spectral differences and correlations.")
     return parser.parse_args()
 

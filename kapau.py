@@ -45,13 +45,6 @@ def calculate_correlation_formel(signal1, signal2):
     """
     Correlation nach Formel:
     correlation = (sum(signal1 * signal2)) / sqrt(sum(signal1^2) * sum(signal2^2))
-    
-    Parameters:
-    signal1 (numpy.ndarray): The first input signal.
-    signal2 (numpy.ndarray): The second input signal.
-    
-    Returns:
-    float: The correlation coefficient rounded to two decimal places.
     """
     if np.all(signal1 == 0) and np.all(signal2 == 0):
         return 1
@@ -66,6 +59,9 @@ def calculate_correlation_formel(signal1, signal2):
 def rms_dbfs(signal):
     rms = np.sqrt(np.mean(signal**2))
     return 20 * np.log10(rms) if rms > 0 else -np.inf
+
+def true_peak_dbfs(signal):
+    return 20 * np.log10(np.max(np.abs(signal))) if np.max(np.abs(signal)) > 0 else -np.inf
 
 def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
     """
@@ -102,7 +98,9 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
             end = start + hop_length
             rms_left = rms_dbfs(left[start:end])
             rms_right = rms_dbfs(right[start:end])
-            anomalies.append((formatted_time, time_point, channel, diff_value, corr_value, rms_left, rms_right))
+            peak_left = true_peak_dbfs(left[start:end])
+            peak_right = true_peak_dbfs(right[start:end])
+            anomalies.append((formatted_time, time_point, channel, diff_value, corr_value, rms_left, rms_right, peak_left, peak_right))
     if anomalies:
         anomalies = filter_nearby_anomalies(anomalies, threshold_time_gap)
 
@@ -110,12 +108,12 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
     if anomalies:
         if not harvester:
             print("Anomalies detected!")
-            print(f"{'h:mm:ss.xx':<12}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'RMS L':<8}{'RMS R'}")
+            print(f"{'h:mm:ss.xx':<12}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'RMS L':<8}{'RMS R':<8}{'Peak L':<8}{'Peak R'}")
         for anomaly in anomalies:
             if harvester:
                 print(f"{anomaly[0]}")
             else:
-                print(f"{anomaly[0]:<12}{anomaly[2]:<7}{anomaly[3]:<7.2f}{anomaly[4]:<7.2f}{anomaly[5]:<8.2f}{anomaly[6]:.2f}")
+                print(f"{anomaly[0]:<12}{anomaly[2]:<7}{anomaly[3]:<7.2f}{anomaly[4]:<7.2f}{anomaly[5]:<8.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:.2f}")
         sys.exit(23)
     else:
         if harvester:

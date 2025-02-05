@@ -51,7 +51,7 @@ def calculate_correlation_formel(signal1, signal2):
     signal2 (numpy.ndarray): The second input signal.
     
     Returns:
-    float: The correlation coefficient rounded to six decimal places.
+    float: The correlation coefficient rounded to two decimal places.
     """
     if np.all(signal1 == 0) and np.all(signal2 == 0):
         return 1
@@ -61,7 +61,7 @@ def calculate_correlation_formel(signal1, signal2):
         return 0.0  # Return 0 if the denominator is zero to avoid division by zero
     
     orth_factor = inner_product / square_product
-    return round(orth_factor, 6)
+    return round(orth_factor, 2)
 
 def rms_dbfs(signal):
     rms = np.sqrt(np.mean(signal**2))
@@ -110,12 +110,12 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
     if anomalies:
         if not harvester:
             print("Anomalies detected!")
-            print(f"{'h:mm:ss.xx':<12}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'RMS L':<7}{'RMS R'}")
+            print(f"{'h:mm:ss.xx':<12}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'RMS L':<8}{'RMS R'}")
         for anomaly in anomalies:
             if harvester:
                 print(f"{anomaly[0]}")
             else:
-                print(f"{anomaly[0]:<12}{anomaly[2]:<7}{anomaly[3]:<7.2f}{anomaly[4]:<7.3f}{anomaly[5]:<7.2f}{anomaly[6]:.2f}")
+                print(f"{anomaly[0]:<12}{anomaly[2]:<7}{anomaly[3]:<7.2f}{anomaly[4]:<7.2f}{anomaly[5]:<8.2f}{anomaly[6]:.2f}")
         sys.exit(23)
     else:
         if harvester:

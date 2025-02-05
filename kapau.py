@@ -55,14 +55,17 @@ def calculate_correlation_formel(signal1, signal2):
     """
     if np.all(signal1 == 0) and np.all(signal2 == 0):
         return 1
-    
-    inner_product = np.sum(signal1 * signal2) 
-    square_product = np.sqrt(np.sum(signal1**2) * np.sum(signal2**2)) 
+    inner_product = np.sum(signal1 * signal2)
+    square_product = np.sqrt(np.sum(signal1**2) * np.sum(signal2**2))
     if square_product == 0:
         return 0.0  # Return 0 if the denominator is zero to avoid division by zero
     
     orth_factor = inner_product / square_product
     return round(orth_factor, 6)
+
+def rms_dbfs(signal):
+    rms = np.sqrt(np.mean(signal**2))
+    return 20 * np.log10(rms) if rms > 0 else -np.inf
 
 def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
     """
@@ -70,17 +73,13 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
     """
     # Lade die Audiodateien
     y, sr = load_audio_files(input_files)
-    left, right = y  # Linken und rechten Kanal extrahieren
-    
-    # Spektralanalyse mit Fast Fourier Transform (FFT)
-    S_left = librosa.amplitude_to_db(np.abs(librosa.stft(left)), ref=np.max)
-    S_right = librosa.amplitude_to_db(np.abs(librosa.stft(right)), ref=np.max)
-
-    # Spektrale Unterschiede berechnen
+    left, right = y
+    hop_length = 512  # Passend zur STFT-Analyse
+    S_left = librosa.amplitude_to_db(np.abs(librosa.stft(left, hop_length=hop_length)), ref=np.max)
+    S_right = librosa.amplitude_to_db(np.abs(librosa.stft(right, hop_length=hop_length)), ref=np.max)
     spectral_diff = np.abs(S_left - S_right)
     max_diff = np.max(spectral_diff)
-
-    if not args.harvester:
+    if not harvester:
         print(f"Max spectral difference: {max_diff:.2f} dB")
 
     # Korrelation berechnen
@@ -94,16 +93,16 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
 
     for t in range(spectral_diff.shape[1]):
         if spectral_diff[:, t].max() > threshold:
-            # Zeitpunkt berechnen
-            time_point = librosa.frames_to_time(t, sr=sr)
-            formatted_time = format_time(time_point)  # Zeit formatieren
-            # Kanal mit der größeren Differenz bestimmen
+            time_point = librosa.frames_to_time(t, sr=sr, hop_length=hop_length)
+            formatted_time = format_time(time_point)
             channel = "Left" if S_left[:, t].max() > S_right[:, t].max() else "Right"
             diff_value = spectral_diff[:, t].max()  # Maximaler Spektraldifferenzwert
             corr_value = correlation[int(time_point)] if int(time_point) < len(correlation) else 0
-            anomalies.append((formatted_time, time_point, channel, diff_value, corr_value))
-
-    # Nahe beieinander liegende Anomalien zusammenfassen
+            start = t * hop_length
+            end = start + hop_length
+            rms_left = rms_dbfs(left[start:end])
+            rms_right = rms_dbfs(right[start:end])
+            anomalies.append((formatted_time, time_point, channel, diff_value, corr_value, rms_left, rms_right))
     if anomalies:
         anomalies = filter_nearby_anomalies(anomalies, threshold_time_gap)
 
@@ -111,12 +110,12 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
     if anomalies:
         if not harvester:
             print("Anomalies detected!")
-            print(f"{'h:mm:ss.xx':<15}{'Channel':<10}{'Spec. Diff (dB)':<16}{'Correlation'}")
+            print(f"{'h:mm:ss.xx':<12}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'RMS L':<7}{'RMS R'}")
         for anomaly in anomalies:
             if harvester:
                 print(f"{anomaly[0]}")
             else:
-                print(f"{anomaly[0]:<15}{anomaly[2]:<10}{anomaly[3]:<16.2f}{anomaly[4]:.6f}")
+                print(f"{anomaly[0]:<12}{anomaly[2]:<7}{anomaly[3]:<7.2f}{anomaly[4]:<7.3f}{anomaly[5]:<7.2f}{anomaly[6]:.2f}")
         sys.exit(23)
     else:
         if harvester:

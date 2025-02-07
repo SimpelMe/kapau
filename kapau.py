@@ -83,8 +83,8 @@ def analyze_audio(input_files, threshold, threshold_time_gap, verbose, harvester
     left, right = y
     # Fenstergröße zur Analyse festlegen in Samples
     hop_length = 512
-    S_left = librosa.amplitude_to_db(np.abs(librosa.stft(left, hop_length=hop_length)), ref=np.max)
-    S_right = librosa.amplitude_to_db(np.abs(librosa.stft(right, hop_length=hop_length)), ref=np.max)
+    S_left = librosa.amplitude_to_db(np.abs(librosa.stft(left, hop_length=hop_length)), ref=1.0)
+    S_right = librosa.amplitude_to_db(np.abs(librosa.stft(right, hop_length=hop_length)), ref=1.0)
     spectral_diff = np.abs(S_left - S_right)
 
     if verbose:

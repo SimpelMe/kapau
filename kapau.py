@@ -109,20 +109,34 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
             rms_right = rms_dbfs(right[start:end])
             peak_left = true_peak_dbfs(left[start:end])
             peak_right = true_peak_dbfs(right[start:end])
-            anomalies.append((formatted_time, time_point, channel, diff_value, corr_value, rms_left, rms_right, peak_left, peak_right))
+
+            anomaly_type = ""
+            if peak_left < -80:
+                anomaly_type = "Silence"
+                channel = "Left"
+            elif peak_right < -80:
+                anomaly_type = "Silence"
+                channel = "Right"
+            elif peak_left >= -4:
+                anomaly_type = "Burst"
+                channel = "Left"
+            elif peak_right >= -4:
+                anomaly_type = "Burst"
+                channel = "Right"
+
+            anomalies.append((formatted_time, time_point, channel, diff_value, corr_value, rms_left, rms_right, peak_left, peak_right, anomaly_type))
     if anomalies:
         anomalies = filter_nearby_anomalies(anomalies, threshold_time_gap)
 
-    # Ergebnisse anzeigen
     if anomalies:
         if not harvester:
             print("Anomalies detected!")
-            print(f"{'h:mm:ss.xx':<12}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'RMS L':<8}{'RMS R':<8}{'Peak L':<8}{'Peak R'}")
+            print(f"{'h:mm:ss.xx':<12}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'RMS L':<8}{'RMS R':<8}{'Peak L':<8}{'Peak R':<8}{'Anomaly'}")
         for anomaly in anomalies:
             if harvester:
                 print(f"{anomaly[0]}")
             else:
-                print(f"{anomaly[0]:<12}{anomaly[2]:<7}{anomaly[3]:<7.2f}{anomaly[4]:<7.2f}{anomaly[5]:<8.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:.2f}")
+                print(f"{anomaly[0]:<12}{anomaly[2]:<7}{anomaly[3]:<7.2f}{anomaly[4]:<7.2f}{anomaly[5]:<8.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:<8.2f}{anomaly[9]}")
         sys.exit(23)
     else:
         if harvester:

@@ -5,6 +5,15 @@ import argparse
 import soundfile as sf
 import sys
 
+# DO NOT TOUCH
+# Die folgenden Zeilen sind notwendig für den Harvester
+# Pfad zu harvester.app/Contents/MacOS
+bundle_path = os.path.dirname(os.path.abspath(__file__))
+# Ressourcen-Ordner
+lib_path = os.path.join(bundle_path, '../Resources/_internal')
+# DYLD_LIBRARY_PATH setzen
+os.environ['DYLD_LIBRARY_PATH'] = lib_path + ':' + os.environ.get('DYLD_LIBRARY_PATH', '')
+
 def parse_arguments():
     """Definiert und analysiert die Kommandozeilenargumente."""
     parser = argparse.ArgumentParser(description="Detect anomalies in a stereo WAV file or two mono WAV files based on spectral differences.")

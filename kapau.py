@@ -180,7 +180,7 @@ def format_time(seconds):
     hours += 10
     minutes = int((seconds % 3600) // 60)
     seconds = round(seconds % 60, 2)  # Runden auf 2 Nachkommastellen
-    return f"{hours:02}:{minutes:02}:{seconds:04.2f}"  # Format mit 2 Nachkommastelle
+    return f"{hours:02}:{minutes:02}:{seconds:05.2f}"  # Format mit 2 Nachkommastelle
 
 # Hauptprogramm starten
 if __name__ == "__main__":

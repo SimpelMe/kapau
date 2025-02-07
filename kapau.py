@@ -84,8 +84,6 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
     S_right = librosa.amplitude_to_db(np.abs(librosa.stft(right, hop_length=hop_length)), ref=np.max)
     spectral_diff = np.abs(S_left - S_right)
     max_diff = np.max(spectral_diff)
-    if not harvester:
-        print(f"Max spectral difference: {max_diff:.2f} dB")
 
     # Korrelation berechnen
     correlation = [
@@ -144,6 +142,7 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
         if harvester:
             print(0)
         else:
+            print(f"Max spectral difference: {max_diff:.2f} dB")
             print("No significant anomalies detected.")
 
 def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):

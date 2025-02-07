@@ -124,19 +124,19 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
                 anomaly_type = "Burst"
                 channel = "Right"
 
-            anomalies.append((formatted_time, time_point, channel, diff_value, corr_value, rms_left, rms_right, peak_left, peak_right, anomaly_type))
+            anomalies.append((time_point, formatted_time, channel, anomaly_type, diff_value, corr_value, peak_left, peak_right, rms_left, rms_right))
     if anomalies:
         anomalies = filter_nearby_anomalies(anomalies, threshold_time_gap)
 
     if anomalies:
         if not harvester:
             print("Anomalies detected!")
-            print(f"{'hh:mm:ss.xx':<13}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'RMS L':<8}{'RMS R':<8}{'Peak L':<8}{'Peak R':<8}{'Anomaly'}")
+            print(f"{'hh:mm:ss.xx':<13}{'Ch':<7}{'Anomaly':<9}{'Diff':<7}{'Corr':<7}{'Peak L':<8}{'Peak R':<8}{'RMS L':<8}{'RMS R'}")
         for anomaly in anomalies:
             if harvester:
-                print(f"{anomaly[0]}")
+                print(f"{anomaly[1]}")
             else:
-                print(f"{anomaly[0]:<13}{anomaly[2]:<7}{anomaly[3]:<7.2f}{anomaly[4]:<7.2f}{anomaly[5]:<8.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:<8.2f}{anomaly[9]}")
+                print(f"{anomaly[1]:<13}{anomaly[2]:<7}{anomaly[3]:<9}{anomaly[4]:<7.2f}{anomaly[5]:<7.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:<8.2f}{anomaly[9]:.2f}")
         sys.exit(23)
     else:
         if harvester:
@@ -152,7 +152,7 @@ def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
     last_time = -float('inf')  # Initialer Vergleichszeitpunkt
     current_window = []  # Liste von Anomalien im aktuellen Zeitfenster
     for anomaly in anomalies:
-        if anomaly[1] - last_time <= threshold_time_gap:
+        if anomaly[0] - last_time <= threshold_time_gap:
             # Anomalie gehört zum aktuellen Zeitfenster
             current_window.append(anomaly)
         else:
@@ -162,7 +162,7 @@ def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
                 filtered_anomalies.append(max_diff_anomaly)
             # Reset für das nächste Zeitfenster
             current_window = [anomaly]
-        last_time = anomaly[1]
+        last_time = anomaly[0]
 
     # Den letzten "Fenster"-Sprung auch hinzufügen, falls es noch Anomalien gibt
     if current_window:

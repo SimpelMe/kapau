@@ -130,7 +130,6 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
         if harvester:
             print("Fehler im Audio detektiert bei:")
         else:
-            print("Anomalies detected!")
             print(f"{'hh:mm:ss.xx':<13}{'Ch':<7}{'Anomaly':<9}{'Diff':<7}{'Corr':<7}{'Peak L':<8}{'Peak R':<8}{'RMS L':<8}{'RMS R'}")
         for anomaly in anomalies:
             if harvester:

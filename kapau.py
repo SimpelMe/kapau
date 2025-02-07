@@ -21,6 +21,7 @@ def parse_arguments():
     parser.add_argument("input_file", nargs="+", help="Path to the WAV file(s) to analyze. Provide one stereo file or two mono files.")
     parser.add_argument("--threshold", type=float, default=60.0, help="Spectral difference threshold (default: 60.0 dB).")
     parser.add_argument("--threshold_time_gap", type=float, default=5.0, help="Time gap to ignore nearby anomalies (default: 5.0 s).")
+    parser.add_argument('--verbose', action='store_true', default=False, help="More detailed output (default: false).")
     parser.add_argument('--harvester', action='store_true', default=False, help="Output pure timestamps for harvester (default: false).")
     return parser.parse_args()
 
@@ -73,7 +74,7 @@ def rms_dbfs(signal):
 def true_peak_dbfs(signal):
     return 20 * np.log10(np.max(np.abs(signal))) if np.max(np.abs(signal)) > 0 else -np.inf
 
-def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
+def analyze_audio(input_files, threshold, threshold_time_gap, verbose, harvester):
     """
     Analysiert die Audiodaten und erkennt Anomalien basierend auf spektralen Unterschieden.
     """
@@ -84,13 +85,15 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
     S_left = librosa.amplitude_to_db(np.abs(librosa.stft(left, hop_length=hop_length)), ref=np.max)
     S_right = librosa.amplitude_to_db(np.abs(librosa.stft(right, hop_length=hop_length)), ref=np.max)
     spectral_diff = np.abs(S_left - S_right)
-    max_diff = np.max(spectral_diff)
 
-    # Korrelation berechnen
-    correlation = [
-        calculate_correlation_formel(left[i : i + sr], right[i : i + sr])
-        for i in range(0, len(left), sr)
-    ]
+    if verbose:
+        max_diff = np.max(spectral_diff)
+
+        # Korrelation berechnen
+        correlation = [
+            calculate_correlation_formel(left[i : i + sr], right[i : i + sr])
+            for i in range(0, len(left), sr)
+        ]
 
     # Anomalien erkennen und filtern
     anomalies = []
@@ -99,31 +102,37 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
         if spectral_diff[:, t].max() > threshold:
             time_point = librosa.frames_to_time(t, sr=sr, hop_length=hop_length)
             formatted_time = format_time(time_point)
-            channel = "Left" if S_left[:, t].max() > S_right[:, t].max() else "Right"
             diff_value = spectral_diff[:, t].max()  # Maximaler Spektraldifferenzwert
-            corr_value = correlation[int(time_point)] if int(time_point) < len(correlation) else 0
-            start = t * hop_length
-            end = start + hop_length
-            rms_left = rms_dbfs(left[start:end])
-            rms_right = rms_dbfs(right[start:end])
-            peak_left = true_peak_dbfs(left[start:end])
-            peak_right = true_peak_dbfs(right[start:end])
 
-            anomaly_type = ""
-            if peak_left < -80:
-                anomaly_type = "Silence"
-                channel = "Left"
-            elif peak_right < -80:
-                anomaly_type = "Silence"
-                channel = "Right"
-            elif peak_left >= -4:
-                anomaly_type = "Burst"
-                channel = "Left"
-            elif peak_right >= -4:
-                anomaly_type = "Burst"
-                channel = "Right"
+            if verbose:
+                channel = "Left" if S_left[:, t].max() > S_right[:, t].max() else "Right"
+                corr_value = correlation[int(time_point)] if int(time_point) < len(correlation) else 0
+                start = t * hop_length
+                end = start + hop_length
+                rms_left = rms_dbfs(left[start:end])
+                rms_right = rms_dbfs(right[start:end])
+                peak_left = true_peak_dbfs(left[start:end])
+                peak_right = true_peak_dbfs(right[start:end])
 
-            anomalies.append((time_point, formatted_time, channel, anomaly_type, diff_value, corr_value, peak_left, peak_right, rms_left, rms_right))
+                anomaly_type = ""
+                if peak_left < -80:
+                    anomaly_type = "Silence"
+                    channel = "Left"
+                elif peak_right < -80:
+                    anomaly_type = "Silence"
+                    channel = "Right"
+                elif peak_left >= -4:
+                    anomaly_type = "Burst"
+                    channel = "Left"
+                elif peak_right >= -4:
+                    anomaly_type = "Burst"
+                    channel = "Right"
+
+            if verbose:
+                anomalies.append((time_point, formatted_time, diff_value, anomaly_type, channel, corr_value, peak_left, peak_right, rms_left, rms_right))
+            else:
+                anomalies.append((time_point, formatted_time, diff_value))
+
     if anomalies:
         anomalies = filter_nearby_anomalies(anomalies, threshold_time_gap)
 
@@ -131,18 +140,25 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
         if harvester:
             print("Fehler im Audio detektiert bei:")
         else:
-            print(f"{'hh:mm:ss.xx':<13}{'Ch':<7}{'Anomaly':<9}{'Diff':<7}{'Corr':<7}{'Peak L':<8}{'Peak R':<8}{'RMS L':<8}{'RMS R'}")
+            if verbose:
+                print(f"Max spectral difference: {max_diff:.2f} dB")
+                print(f"{'hh:mm:ss.xx':<13}{'Anomaly':<9}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'Peak L':<8}{'Peak R':<8}{'RMS L':<8}{'RMS R'}")
+
         for anomaly in anomalies:
             if harvester:
                 print(f"{anomaly[1]}")
             else:
-                print(f"{anomaly[1]:<13}{anomaly[2]:<7}{anomaly[3]:<9}{anomaly[4]:<7.2f}{anomaly[5]:<7.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:<8.2f}{anomaly[9]:.2f}")
+                if verbose:
+                    print(f"{anomaly[1]:<13}{anomaly[3]:<9}{anomaly[4]:<7}{anomaly[2]:<7.2f}{anomaly[5]:<7.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:<8.2f}{anomaly[9]:.2f}")
+                else:
+                    print(f"{anomaly[1]}")
         sys.exit(23)
     else:
         if harvester:
             print(0)
         else:
-            print(f"Max spectral difference: {max_diff:.2f} dB")
+            if verbose:
+                print(f"Max spectral difference: {max_diff:.2f} dB")
             print("No significant anomalies detected.")
 
 def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
@@ -159,7 +175,7 @@ def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
         else:
             # Wenn das Zeitfenster überschritten wurde, den größten Sprung im aktuellen Fenster ermitteln
             if current_window:
-                max_diff_anomaly = max(current_window, key=lambda x: x[3])  # Anomalie mit dem größten Differenzwert
+                max_diff_anomaly = max(current_window, key=lambda x: x[2])  # Anomalie mit dem größten Differenzwert
                 filtered_anomalies.append(max_diff_anomaly)
             # Reset für das nächste Zeitfenster
             current_window = [anomaly]
@@ -167,7 +183,7 @@ def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
 
     # Den letzten "Fenster"-Sprung auch hinzufügen, falls es noch Anomalien gibt
     if current_window:
-        max_diff_anomaly = max(current_window, key=lambda x: x[3])
+        max_diff_anomaly = max(current_window, key=lambda x: x[2])
         filtered_anomalies.append(max_diff_anomaly)
 
     return filtered_anomalies
@@ -188,11 +204,10 @@ if __name__ == "__main__":
     try:
         # Argumente parsen und Analyse starten
         args = parse_arguments()
-        if not args.harvester:
-            print(f"")
+        if args.verbose and not args.harvester:
             pathwofilename, filename = os.path.split(args.input_file[0])
             print(f"{filename}")
-        analyze_audio(args.input_file, args.threshold, args.threshold_time_gap, args.harvester)
+        analyze_audio(args.input_file, args.threshold, args.threshold_time_gap, args.verbose, args.harvester)
         sys.exit(0)
     except Exception as e:
         # Ausgabe Fehler-Stacktrace inklusive der fehlerhaften Zeile

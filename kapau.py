@@ -4,6 +4,7 @@ import librosa
 import argparse
 import soundfile as sf
 import sys
+import traceback
 
 # DO NOT TOUCH
 # Die folgenden Zeilen sind notwendig für den Harvester
@@ -194,5 +195,6 @@ if __name__ == "__main__":
         analyze_audio(args.input_file, args.threshold, args.threshold_time_gap, args.harvester)
         sys.exit(0)
     except Exception as e:
-        print(f"Error: {e}")
+        # Ausgabe Fehler-Stacktrace inklusive der fehlerhaften Zeile
+        print(traceback.format_exc())
         sys.exit(1)

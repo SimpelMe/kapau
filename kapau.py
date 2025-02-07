@@ -100,20 +100,46 @@ def analyze_audio(input_files, threshold, threshold_time_gap, verbose, harvester
     anomalies = []
 
     for t in range(spectral_diff.shape[1]):
-        if spectral_diff[:, t].max() > threshold:
+        diff_value = spectral_diff[:, t].max()  # Maximaler Spektraldifferenzwert
+        start = t * hop_length
+        end = start + hop_length
+        if len(left[start:end]) > 0:
+            peak_left = true_peak_dbfs(left[start:end])
+        else:
+            peak_left = -np.inf  # Kein Signal -> niedrigster Wert
+
+        if len(right[start:end]) > 0:
+            peak_right = true_peak_dbfs(right[start:end])
+        else:
+            peak_right = -np.inf  # Kein Signal -> niedrigster Wert
+
+        # Überprüfung, ob eine Anomalie vorliegt wenn:
+        # 1. die spektrale Differenz mindestens 20 dB beträgt
+        #    → unbedeutende Abweichungen werden grundsätzlich ingnoriert
+        # 2. mindestens eine der folgenden Bedingungen erfüllt ist:
+        #    a) die spektrale Differenz überschreitet den Schwellwert
+        #    b) True Peak für den linken oder rechten Kanal ist sehr groß
+        #       → erkennt Bursts
+        #    c) True Peak für den linken oder rechten Kanal ist sehr klein
+        #       → erkennt Silence
+        # 3. beide True Peaks sind nicht zeitgleich sehr hoch oder sehr klein
+        #    → vor allem Abblenden werden ignoriert
+        if (diff_value >= 20 
+            and (diff_value > threshold 
+            or peak_left >= -4 
+            or peak_right >= -4 
+            or peak_left <= -80 
+            or peak_right <= -80) 
+            and not (peak_left >= -4 and peak_right >= -4) 
+            and not (peak_left <= -80 and peak_right <= -80)):
             time_point = librosa.frames_to_time(t, sr=sr, hop_length=hop_length)
             formatted_time = format_time(time_point)
-            diff_value = spectral_diff[:, t].max()  # Maximaler Spektraldifferenzwert
 
             if verbose:
                 channel = "Left" if S_left[:, t].max() > S_right[:, t].max() else "Right"
                 corr_value = correlation[int(time_point)] if int(time_point) < len(correlation) else 0
-                start = t * hop_length
-                end = start + hop_length
                 rms_left = rms_dbfs(left[start:end])
                 rms_right = rms_dbfs(right[start:end])
-                peak_left = true_peak_dbfs(left[start:end])
-                peak_right = true_peak_dbfs(right[start:end])
 
                 anomaly_type = ""
                 if peak_left < -80:

@@ -131,12 +131,12 @@ def analyze_audio(input_files, threshold, threshold_time_gap, harvester):
     if anomalies:
         if not harvester:
             print("Anomalies detected!")
-            print(f"{'h:mm:ss.xx':<12}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'RMS L':<8}{'RMS R':<8}{'Peak L':<8}{'Peak R':<8}{'Anomaly'}")
+            print(f"{'hh:mm:ss.xx':<13}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'RMS L':<8}{'RMS R':<8}{'Peak L':<8}{'Peak R':<8}{'Anomaly'}")
         for anomaly in anomalies:
             if harvester:
                 print(f"{anomaly[0]}")
             else:
-                print(f"{anomaly[0]:<12}{anomaly[2]:<7}{anomaly[3]:<7.2f}{anomaly[4]:<7.2f}{anomaly[5]:<8.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:<8.2f}{anomaly[9]}")
+                print(f"{anomaly[0]:<13}{anomaly[2]:<7}{anomaly[3]:<7.2f}{anomaly[4]:<7.2f}{anomaly[5]:<8.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:<8.2f}{anomaly[9]}")
         sys.exit(23)
     else:
         if harvester:
@@ -173,12 +173,14 @@ def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
 
 def format_time(seconds):
     """
-    Formatierte Ausgabe der Zeit in h:mm:ss.x.
+    Formatierte Ausgabe der Zeit in hh:mm:ss.x.
     """
     hours = int(seconds // 3600)
+    # da unsere Timelines immer mit 10:00:00:00 beginnen addiere 10 Stunden
+    hours += 10
     minutes = int((seconds % 3600) // 60)
     seconds = round(seconds % 60, 2)  # Runden auf 2 Nachkommastellen
-    return f"{hours:01}:{minutes:02}:{seconds:04.2f}"  # Format mit 2 Nachkommastelle
+    return f"{hours:02}:{minutes:02}:{seconds:04.2f}"  # Format mit 2 Nachkommastelle
 
 # Hauptprogramm starten
 if __name__ == "__main__":

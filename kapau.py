@@ -142,14 +142,14 @@ def analyze_audio(input_files, threshold, threshold_time_gap, verbose, harvester
         else:
             if verbose:
                 print(f"Max spectral difference: {max_diff:.2f} dB")
-                print(f"{'hh:mm:ss':<10}{'Anomaly':<9}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'Peak L':<8}{'Peak R':<8}{'RMS L':<8}{'RMS R'}")
+                print(f"{'h:mm:ss':<9}{'Anomaly':<9}{'Ch':<7}{'Diff':<7}{'Corr':<7}{'Peak L':<8}{'Peak R':<8}{'RMS L':<8}{'RMS R'}")
 
         for anomaly in anomalies:
             if harvester:
                 print(f"{anomaly[1]}")
             else:
                 if verbose:
-                    print(f"{anomaly[1]:<10}{anomaly[3]:<9}{anomaly[4]:<7}{anomaly[2]:<7.2f}{anomaly[5]:<7.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:<8.2f}{anomaly[9]:.2f}")
+                    print(f"{anomaly[1]:<9}{anomaly[3]:<9}{anomaly[4]:<7}{anomaly[2]:<7.2f}{anomaly[5]:<7.2f}{anomaly[6]:<8.2f}{anomaly[7]:<8.2f}{anomaly[8]:<8.2f}{anomaly[9]:.2f}")
                 else:
                     print(f"{anomaly[1]}")
         sys.exit(23)
@@ -190,14 +190,12 @@ def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
 
 def format_time(seconds):
     """
-    Formatierte Ausgabe der Zeit in hh:mm:ss.x.
+    Formatierte Ausgabe der Zeit in h:mm:ss
     """
     hours = int(seconds // 3600)
-    # da unsere Timelines immer mit 10:00:00:00 beginnen addiere 10 Stunden
-    hours += 10
     minutes = int((seconds % 3600) // 60)
     seconds = int(seconds % 60)
-    return f"{hours:02}:{minutes:02}:{seconds:02}"
+    return f"{hours:01}:{minutes:02}:{seconds:02}"
 
 # Hauptprogramm starten
 if __name__ == "__main__":

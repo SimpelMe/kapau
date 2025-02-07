@@ -76,12 +76,13 @@ def true_peak_dbfs(signal):
 
 def analyze_audio(input_files, threshold, threshold_time_gap, verbose, harvester):
     """
-    Analysiert die Audiodaten und erkennt Anomalien basierend auf spektralen Unterschieden.
+    Analysiert die Audiodaten und erkennt Anomalien basierend auf großen spektralen Unterschieden.
     """
     # Lade die Audiodateien
     y, sr = load_audio_files(input_files)
     left, right = y
-    hop_length = 512  # Passend zur STFT-Analyse
+    # Fenstergröße zur Analyse festlegen in Samples
+    hop_length = 512
     S_left = librosa.amplitude_to_db(np.abs(librosa.stft(left, hop_length=hop_length)), ref=np.max)
     S_right = librosa.amplitude_to_db(np.abs(librosa.stft(right, hop_length=hop_length)), ref=np.max)
     spectral_diff = np.abs(S_left - S_right)
@@ -163,7 +164,7 @@ def analyze_audio(input_files, threshold, threshold_time_gap, verbose, harvester
 
 def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
     """
-    Identifiziert die größten Sprünge innerhalb benachbarter Anomalien und gibt diese als Anomalien aus.
+    Identifiziert die größte Spektral-Differenz innerhalb benachbarter Anomalien und gibt diese als Anomalie aus.
     """
     filtered_anomalies = []
     last_time = -float('inf')  # Initialer Vergleichszeitpunkt
@@ -173,15 +174,16 @@ def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
             # Anomalie gehört zum aktuellen Zeitfenster
             current_window.append(anomaly)
         else:
-            # Wenn das Zeitfenster überschritten wurde, den größten Sprung im aktuellen Fenster ermitteln
+            # Wenn das Zeitfenster überschritten wird, die größte Differenz im aktuellen Fenster ermitteln
             if current_window:
-                max_diff_anomaly = max(current_window, key=lambda x: x[2])  # Anomalie mit dem größten Differenzwert
+                # Anomalie mit dem größten Differenzwert
+                max_diff_anomaly = max(current_window, key=lambda x: x[2])
                 filtered_anomalies.append(max_diff_anomaly)
             # Reset für das nächste Zeitfenster
             current_window = [anomaly]
         last_time = anomaly[0]
 
-    # Den letzten "Fenster"-Sprung auch hinzufügen, falls es noch Anomalien gibt
+    # Die letzte Differenz hinzufügen, falls es noch Anomalien gibt
     if current_window:
         max_diff_anomaly = max(current_window, key=lambda x: x[2])
         filtered_anomalies.append(max_diff_anomaly)

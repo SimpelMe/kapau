@@ -17,7 +17,7 @@ os.environ['DYLD_LIBRARY_PATH'] = lib_path + ':' + os.environ.get('DYLD_LIBRARY_
 
 def parse_arguments():
     """Definiert und analysiert die Kommandozeilenargumente."""
-    parser = argparse.ArgumentParser(description="Detect anomalies in a stereo WAV file or two mono WAV files based on spectral differences.")
+    parser = argparse.ArgumentParser(description="Detect anomalies in a stereo WAV file or two mono WAV files based on spectral differences and true peak.")
     parser.add_argument("input_file", nargs="+", help="Path to the WAV file(s) to analyze. Provide one stereo file or two mono files.")
     parser.add_argument("--threshold", type=float, default=60.0, help="Spectral difference threshold (default: 60.0 dB).")
     parser.add_argument("--threshold_time_gap", type=float, default=5.0, help="Time gap to ignore nearby anomalies (default: 5.0 s).")
@@ -188,7 +188,7 @@ def analyze_audio(input_files, threshold, threshold_time_gap, verbose, harvester
                 print(f"Max spectral difference: {max_diff:.2f} dB")
             print("No significant anomalies detected.")
 
-def filter_nearby_anomalies(anomalies, threshold_time_gap=0.5):
+def filter_nearby_anomalies(anomalies, threshold_time_gap):
     """
     Identifiziert die größte Spektral-Differenz innerhalb benachbarter Anomalien und gibt diese als Anomalie aus.
     """

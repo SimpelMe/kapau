@@ -41,6 +41,7 @@ def parse_arguments():
 
     parser.add_argument("input_file", nargs="+", metavar="FILES", help="path to the wav file(s) to analyze\nprovide one stereo or two mono (split) files")
     parser.add_argument("--threshold", type=float, default=60.0, metavar="", help="spectral difference threshold (dB)")
+    parser.add_argument("--min_threshold", type=float, default=20.0, metavar="", help="minimal spectral difference threshold (dB)")
     parser.add_argument("--scan_size", type=int, default=512, metavar="", help="size (samples) of analysis window")
     parser.add_argument("--same_error_gap", type=float, default=5.0, metavar="", help="time (s) ignoring nearby anomalies")
     parser.add_argument("--peak_burst", type=float, default=-4.0, metavar="", help="level (dBFS) where burst is detected")
@@ -106,7 +107,7 @@ def rms_dbfs(signal):
 def true_peak_dbfs(signal):
     return 20 * np.log10(np.max(np.abs(signal))) if np.max(np.abs(signal)) > 0 else -np.inf
 
-def analyze_audio(input_files, threshold, scan_size, same_error_gap, peak_burst, burst_diff, peak_silence, verbose, harvester):
+def analyze_audio(input_files, threshold, min_threshold, scan_size, same_error_gap, peak_burst, burst_diff, peak_silence, verbose, harvester):
     """
     Analysiert die Audiodaten und erkennt Anomalien basierend auf großen spektralen Unterschieden.
     """
@@ -146,17 +147,17 @@ def analyze_audio(input_files, threshold, scan_size, same_error_gap, peak_burst,
             peak_right = -np.inf  # Kein Signal -> niedrigster Wert
 
         # Überprüfung, ob eine Anomalie vorliegt wenn:
-        # 1. die spektrale Differenz mindestens 20 dB beträgt
+        # 1. die spektrale Differenz mindestens min_threshold dB beträgt
         #    → unbedeutende Abweichungen werden grundsätzlich ingnoriert
         # 2. mindestens eine der folgenden Bedingungen erfüllt ist:
-        #    a) die spektrale Differenz überschreitet den Schwellwert
+        #    a) die spektrale Differenz überschreitet den Schwellwert threshold
         #    b) True Peak für den linken oder rechten Kanal ist sehr groß
         #       → erkennt Bursts
         #    c) True Peak für den linken oder rechten Kanal ist sehr klein
         #       → erkennt Silence
         # 3. beide True Peaks sind nicht zeitgleich sehr hoch oder sehr klein
         #    → vor allem Abblenden werden ignoriert
-        if (diff_value >= 20 
+        if (diff_value >= min_threshold 
             and (diff_value > threshold 
             or peak_left >= peak_burst 
             or peak_right >= peak_burst 
@@ -265,14 +266,16 @@ if __name__ == "__main__":
         args = parse_arguments()
 
         # Prüfe auf sinnvolle Werte
-        if args.threshold <= 20:
-            raise Exception("threshold must be greater than 20")
+        if args.threshold <= args.min_threshold:
+            raise Exception(f"threshold must be greater than min_threshold (currently threshold is {args.threshold} and min_threshold is {args.min_threshold}")
+        if args.min_threshold <= 0:
+            raise Exception("min_threshold must be greater than 0")
         if args.scan_size <= 0:
             raise Exception("scan_size must be greater than 0")
         if args.same_error_gap <= 0:
             raise Exception("same_error_gap must be greater than 0")
         if args.peak_burst <= args.peak_silence:
-            raise Exception(f"peak_burst must be greater than peak_silence (currently: peak_burst is {args.peak_burst} and peak_silence ist {args.peak_silence})")
+            raise Exception(f"peak_burst must be greater than peak_silence (currently: peak_burst is {args.peak_burst} and peak_silence is {args.peak_silence})")
         if args.peak_burst > 0:
             raise Exception("peak_burst must not be greater than 0")
         if args.burst_diff <= 0:
@@ -284,7 +287,7 @@ if __name__ == "__main__":
             print(f"{filename}")
 
         # Analyze starten
-        analyze_audio(args.input_file, args.threshold, args.scan_size, args.same_error_gap, args.peak_burst, args.burst_diff, args.peak_silence, args.verbose, args.harvester)
+        analyze_audio(args.input_file, args.threshold, args.min_threshold, args.scan_size, args.same_error_gap, args.peak_burst, args.burst_diff, args.peak_silence, args.verbose, args.harvester)
 
         sys.exit(0)
 

@@ -1,5 +1,6 @@
 *.txt
 *.json
+*.zip
 __pycache__/*
 
 # files and folder created by pyinstaller

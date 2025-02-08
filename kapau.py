@@ -19,10 +19,10 @@ def parse_arguments():
     """Definiert und analysiert die Kommandozeilenargumente."""
     parser = argparse.ArgumentParser(description="Detect anomalies in a stereo WAV file or two mono WAV files based on spectral differences and true peak.")
     parser.add_argument("input_file", nargs="+", help="Path to the WAV file(s) to analyze. Provide one stereo file or two mono files.")
-    parser.add_argument("--threshold", type=float, default=60.0, help="Spectral difference threshold (default: 60.0 dB).")
-    parser.add_argument("--same_error_gap", type=float, default=5.0, help="Time gap to ignore nearby anomalies (default: 5.0 s).")
+    parser.add_argument("--threshold", type=float, default=60.0, help="Spectral difference threshold (default: 60.0) in dB.")
+    parser.add_argument("--same_error_gap", type=float, default=5.0, help="Time gap to ignore nearby anomalies (default: 5.0) in s.")
     parser.add_argument('--verbose', action='store_true', default=False, help="More detailed output (default: false).")
-    parser.add_argument('--harvester', action='store_true', default=False, help="Output pure timestamps for harvester (default: false).")
+    parser.add_argument('--harvester', action='store_true', default=False, help="Output pure time stamps for harvester (default: false).")
     return parser.parse_args()
 
 def load_audio_files(input_files):

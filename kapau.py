@@ -54,6 +54,12 @@ def load_audio_files(input_files):
     Lädt entweder eine Stereo-Audiodatei oder zwei Mono-Audiodateien.
     Überprüft die Konsistenz der Eingabedateien.
     """
+
+    # Prüfe, ob alle angegebenen Dateien existieren
+    for file in input_files:
+        if not os.path.isfile(file):
+            raise FileNotFoundError(f"Error: File not found -> {file}")
+
     if len(input_files) == 1:
         # Einzelne Datei bereitgestellt, prüfen, ob sie stereo ist
         file_path = input_files[0]

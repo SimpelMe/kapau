@@ -259,16 +259,36 @@ def format_time(seconds):
 # Hauptprogramm starten
 if __name__ == "__main__":
     try:
-        # Argumente parsen und Analyse starten
+        # Argumente parsen
         args = parse_arguments()
+
+        # Prüfe auf sinnvolle Werte
+        if args.threshold <= 20:
+            raise Exception("threshold must be greater than 20")
+        if args.scan_size <= 0:
+            raise Exception("scan_size must be greater than 0")
+        if args.same_error_gap <= 0:
+            raise Exception("same_error_gap must be greater than 0")
+        if args.peak_burst <= args.peak_silence:
+            raise Exception(f"peak_burst must be greater than peak_silence (currently: peak_burst is {args.peak_burst} and peak_silence ist {args.peak_silence})")
+        if args.peak_burst > 0:
+            raise Exception(f"peak_burst must not be greater than 0")
+
+        # Zeige im --verbose den Dateinamen an
         if args.verbose and not args.harvester:
             pathwofilename, filename = os.path.split(args.input_file[0])
             print(f"{filename}")
+
+        # Analyze starten
         analyze_audio(args.input_file, args.threshold, args.scan_size, args.same_error_gap, args.peak_burst, args.peak_silence, args.verbose, args.harvester)
+
         sys.exit(0)
+
     except Exception as e:
         if args.verbose:
-            print(traceback.format_exc())  # Voller Stacktrace nur in verbose mode
+            # Voller Stacktrace nur in verbose mode
+            print(traceback.format_exc())
         else:
-            print(f"Error: {e}")  # Standard: Nur die kurze Fehlermeldung
+            # Standard: die kurze Fehlermeldung
+            print(f"Error: {e}")
         sys.exit(1)

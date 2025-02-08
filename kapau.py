@@ -17,12 +17,25 @@ os.environ['DYLD_LIBRARY_PATH'] = lib_path + ':' + os.environ.get('DYLD_LIBRARY_
 
 def parse_arguments():
     """Definiert und analysiert die Kommandozeilenargumente."""
-    parser = argparse.ArgumentParser(description="Detect anomalies in a stereo WAV file or two mono WAV files based on spectral differences and true peak.")
-    parser.add_argument("input_file", nargs="+", help="Path to the WAV file(s) to analyze. Provide one stereo file or two mono files.")
-    parser.add_argument("--threshold", type=float, default=60.0, help="Spectral difference threshold (default: 60.0) in dB.")
-    parser.add_argument("--same_error_gap", type=float, default=5.0, help="Time gap to ignore nearby anomalies (default: 5.0) in s.")
-    parser.add_argument('--verbose', action='store_true', default=False, help="More detailed output (default: false).")
-    parser.add_argument('--harvester', action='store_true', default=False, help="Output pure time stamps for harvester (default: false).")
+
+    # diese Klasse kombiniert beide Formatter
+    class CustomHelpFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
+        pass
+
+    prog_name = os.path.basename(sys.argv[0])
+    parser = argparse.ArgumentParser(
+        description="Detect anomalies in wav file(s) based on spectral differences and true peak.",
+        usage=f"{prog_name} [OPTIONS] FILES",
+        epilog="MIT License (c) 2025 Simpel",
+        formatter_class=CustomHelpFormatter
+    )
+
+    parser.add_argument("input_file", nargs="+", metavar="FILES", help="Path to the wav file(s) to analyze.\nProvide one stereo or two mono (split) files")
+    parser.add_argument("--threshold", type=float, default=60.0, metavar="", help="Spectral difference threshold (dB).")
+    parser.add_argument("--same_error_gap", type=float, default=5.0, metavar="", help="Time (s) ignoring nearby anomalies.")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable detailed output.")
+    parser.add_argument("-H", "--harvester", action="store_true", help="Output pure timestamps for harvester.")
+
     return parser.parse_args()
 
 def load_audio_files(input_files):

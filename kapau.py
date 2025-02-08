@@ -33,6 +33,8 @@ def parse_arguments():
     parser.add_argument("input_file", nargs="+", metavar="FILES", help="path to the wav file(s) to analyze\nprovide one stereo or two mono (split) files")
     parser.add_argument("--threshold", type=float, default=60.0, metavar="", help="spectral difference threshold (dB)")
     parser.add_argument("--same_error_gap", type=float, default=5.0, metavar="", help="time (s) ignoring nearby anomalies")
+    parser.add_argument("--peak_burst", type=float, default=-4.0, metavar="", help="level (dBFS) where burst is detected")
+    parser.add_argument("--peak_silence", type=float, default=-80.0, metavar="", help="level (dBFS) where silence is detected")
     parser.add_argument("-v", "--verbose", action="store_true", help="enable detailed output")
     parser.add_argument("-H", "--harvester", action="store_true", help="output pure timestamps for harvester")
 
@@ -87,7 +89,7 @@ def rms_dbfs(signal):
 def true_peak_dbfs(signal):
     return 20 * np.log10(np.max(np.abs(signal))) if np.max(np.abs(signal)) > 0 else -np.inf
 
-def analyze_audio(input_files, threshold, same_error_gap, verbose, harvester):
+def analyze_audio(input_files, threshold, same_error_gap, peak_burst, peak_silence, verbose, harvester):
     """
     Analysiert die Audiodaten und erkennt Anomalien basierend auf großen spektralen Unterschieden.
     """
@@ -139,12 +141,12 @@ def analyze_audio(input_files, threshold, same_error_gap, verbose, harvester):
         #    → vor allem Abblenden werden ignoriert
         if (diff_value >= 20 
             and (diff_value > threshold 
-            or peak_left >= -4 
-            or peak_right >= -4 
-            or peak_left <= -80 
-            or peak_right <= -80) 
-            and not (peak_left >= -4 and peak_right >= -4) 
-            and not (peak_left <= -80 and peak_right <= -80)):
+            or peak_left >= peak_burst 
+            or peak_right >= peak_burst 
+            or peak_left <= peak_silence 
+            or peak_right <= peak_silence) 
+            and not (peak_left >= peak_burst and peak_right >= peak_burst) 
+            and not (peak_left <= peak_silence and peak_right <= peak_silence)):
             time_point = librosa.frames_to_time(t, sr=sr, hop_length=hop_length)
             formatted_time = format_time(time_point)
 
@@ -155,16 +157,16 @@ def analyze_audio(input_files, threshold, same_error_gap, verbose, harvester):
                 rms_right = rms_dbfs(right[start:end])
 
                 anomaly_type = ""
-                if peak_left < -80:
+                if peak_left < peak_silence:
                     anomaly_type = "Silence"
                     channel = "Left"
-                elif peak_right < -80:
+                elif peak_right < peak_silence:
                     anomaly_type = "Silence"
                     channel = "Right"
-                elif peak_left >= -4:
+                elif peak_left >= peak_burst:
                     anomaly_type = "Burst"
                     channel = "Left"
-                elif peak_right >= -4:
+                elif peak_right >= peak_burst:
                     anomaly_type = "Burst"
                     channel = "Right"
 
@@ -246,7 +248,7 @@ if __name__ == "__main__":
         if args.verbose and not args.harvester:
             pathwofilename, filename = os.path.split(args.input_file[0])
             print(f"{filename}")
-        analyze_audio(args.input_file, args.threshold, args.same_error_gap, args.verbose, args.harvester)
+        analyze_audio(args.input_file, args.threshold, args.same_error_gap, args.peak_burst, args.peak_silence, args.verbose, args.harvester)
         sys.exit(0)
     except Exception as e:
         # Ausgabe Fehler-Stacktrace inklusive der fehlerhaften Zeile

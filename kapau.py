@@ -41,6 +41,7 @@ def parse_arguments():
 
     parser.add_argument("input_file", nargs="+", metavar="FILES", help="path to the wav file(s) to analyze\nprovide one stereo or two mono (split) files")
     parser.add_argument("--threshold", type=float, default=60.0, metavar="", help="spectral difference threshold (dB)")
+    parser.add_argument("--scan_size", type=int, default=512, metavar="", help="size (samples) of analysis window")
     parser.add_argument("--same_error_gap", type=float, default=5.0, metavar="", help="time (s) ignoring nearby anomalies")
     parser.add_argument("--peak_burst", type=float, default=-4.0, metavar="", help="level (dBFS) where burst is detected")
     parser.add_argument("--peak_silence", type=float, default=-80.0, metavar="", help="level (dBFS) where silence is detected")
@@ -104,7 +105,7 @@ def rms_dbfs(signal):
 def true_peak_dbfs(signal):
     return 20 * np.log10(np.max(np.abs(signal))) if np.max(np.abs(signal)) > 0 else -np.inf
 
-def analyze_audio(input_files, threshold, same_error_gap, peak_burst, peak_silence, verbose, harvester):
+def analyze_audio(input_files, threshold, scan_size, same_error_gap, peak_burst, peak_silence, verbose, harvester):
     """
     Analysiert die Audiodaten und erkennt Anomalien basierend auf großen spektralen Unterschieden.
     """
@@ -112,7 +113,7 @@ def analyze_audio(input_files, threshold, same_error_gap, peak_burst, peak_silen
     y, sr = load_audio_files(input_files)
     left, right = y
     # Fenstergröße zur Analyse festlegen in Samples
-    hop_length = 512
+    hop_length = scan_size
     S_left = librosa.amplitude_to_db(np.abs(librosa.stft(left, hop_length=hop_length)), ref=1.0)
     S_right = librosa.amplitude_to_db(np.abs(librosa.stft(right, hop_length=hop_length)), ref=1.0)
     spectral_diff = np.abs(S_left - S_right)
@@ -263,7 +264,7 @@ if __name__ == "__main__":
         if args.verbose and not args.harvester:
             pathwofilename, filename = os.path.split(args.input_file[0])
             print(f"{filename}")
-        analyze_audio(args.input_file, args.threshold, args.same_error_gap, args.peak_burst, args.peak_silence, args.verbose, args.harvester)
+        analyze_audio(args.input_file, args.threshold, args.scan_size, args.same_error_gap, args.peak_burst, args.peak_silence, args.verbose, args.harvester)
         sys.exit(0)
     except Exception as e:
         if args.verbose:

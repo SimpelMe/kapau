@@ -22,8 +22,17 @@ def parse_arguments():
     class CustomHelpFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
         pass
 
+    # Erzwingt die Hilfe bei jedem Fehler
+    class CustomArgumentParser(argparse.ArgumentParser):
+        def error(self, message):
+            """Überschreibt die Fehlerbehandlung und zeigt sofort die Hilfe."""
+            print(f"Error: {message}\n")
+            self.print_help()
+            sys.exit(1)
+
     prog_name = os.path.basename(sys.argv[0])
-    parser = argparse.ArgumentParser(
+
+    parser = CustomArgumentParser(
         description="Detect anomalies in wav file(s) based on spectral differences and true peak.",
         usage=f"{prog_name} [OPTIONS] FILES",
         epilog="MIT License (c) 2025 Simpel",

@@ -30,11 +30,11 @@ def parse_arguments():
         formatter_class=CustomHelpFormatter
     )
 
-    parser.add_argument("input_file", nargs="+", metavar="FILES", help="Path to the wav file(s) to analyze.\nProvide one stereo or two mono (split) files")
-    parser.add_argument("--threshold", type=float, default=60.0, metavar="", help="Spectral difference threshold (dB).")
-    parser.add_argument("--same_error_gap", type=float, default=5.0, metavar="", help="Time (s) ignoring nearby anomalies.")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable detailed output.")
-    parser.add_argument("-H", "--harvester", action="store_true", help="Output pure timestamps for harvester.")
+    parser.add_argument("input_file", nargs="+", metavar="FILES", help="path to the wav file(s) to analyze\nprovide one stereo or two mono (split) files")
+    parser.add_argument("--threshold", type=float, default=60.0, metavar="", help="spectral difference threshold (dB)")
+    parser.add_argument("--same_error_gap", type=float, default=5.0, metavar="", help="time (s) ignoring nearby anomalies")
+    parser.add_argument("-v", "--verbose", action="store_true", help="enable detailed output")
+    parser.add_argument("-H", "--harvester", action="store_true", help="output pure timestamps for harvester")
 
     return parser.parse_args()
 

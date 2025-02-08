@@ -44,6 +44,7 @@ def parse_arguments():
     parser.add_argument("--scan_size", type=int, default=512, metavar="", help="size (samples) of analysis window")
     parser.add_argument("--same_error_gap", type=float, default=5.0, metavar="", help="time (s) ignoring nearby anomalies")
     parser.add_argument("--peak_burst", type=float, default=-4.0, metavar="", help="level (dBFS) where burst is detected")
+    parser.add_argument("--burst_diff", type=float, default=6.0, metavar="", help="left right peak difference (dB) for burst")
     parser.add_argument("--peak_silence", type=float, default=-80.0, metavar="", help="level (dBFS) where silence is detected")
     parser.add_argument("-v", "--verbose", action="store_true", help="enable detailed output")
     parser.add_argument("-H", "--harvester", action="store_true", help="output pure timestamps for harvester")
@@ -105,7 +106,7 @@ def rms_dbfs(signal):
 def true_peak_dbfs(signal):
     return 20 * np.log10(np.max(np.abs(signal))) if np.max(np.abs(signal)) > 0 else -np.inf
 
-def analyze_audio(input_files, threshold, scan_size, same_error_gap, peak_burst, peak_silence, verbose, harvester):
+def analyze_audio(input_files, threshold, scan_size, same_error_gap, peak_burst, burst_diff, peak_silence, verbose, harvester):
     """
     Analysiert die Audiodaten und erkennt Anomalien basierend auf großen spektralen Unterschieden.
     """
@@ -162,6 +163,7 @@ def analyze_audio(input_files, threshold, scan_size, same_error_gap, peak_burst,
             or peak_left <= peak_silence 
             or peak_right <= peak_silence) 
             and not (peak_left >= peak_burst and peak_right >= peak_burst) 
+            and not (np.abs(peak_left - peak_right) < burst_diff)
             and not (peak_left <= peak_silence and peak_right <= peak_silence)):
             time_point = librosa.frames_to_time(t, sr=sr, hop_length=hop_length)
             formatted_time = format_time(time_point)
@@ -272,7 +274,9 @@ if __name__ == "__main__":
         if args.peak_burst <= args.peak_silence:
             raise Exception(f"peak_burst must be greater than peak_silence (currently: peak_burst is {args.peak_burst} and peak_silence ist {args.peak_silence})")
         if args.peak_burst > 0:
-            raise Exception(f"peak_burst must not be greater than 0")
+            raise Exception("peak_burst must not be greater than 0")
+        if args.burst_diff <= 0:
+            raise Exception("burst_diff must be greater than 0")
 
         # Zeige im --verbose den Dateinamen an
         if args.verbose and not args.harvester:
@@ -280,7 +284,7 @@ if __name__ == "__main__":
             print(f"{filename}")
 
         # Analyze starten
-        analyze_audio(args.input_file, args.threshold, args.scan_size, args.same_error_gap, args.peak_burst, args.peak_silence, args.verbose, args.harvester)
+        analyze_audio(args.input_file, args.threshold, args.scan_size, args.same_error_gap, args.peak_burst, args.burst_diff, args.peak_silence, args.verbose, args.harvester)
 
         sys.exit(0)
 

@@ -20,7 +20,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Detect anomalies in a stereo WAV file or two mono WAV files based on spectral differences and true peak.")
     parser.add_argument("input_file", nargs="+", help="Path to the WAV file(s) to analyze. Provide one stereo file or two mono files.")
     parser.add_argument("--threshold", type=float, default=60.0, help="Spectral difference threshold (default: 60.0 dB).")
-    parser.add_argument("--threshold_time_gap", type=float, default=5.0, help="Time gap to ignore nearby anomalies (default: 5.0 s).")
+    parser.add_argument("--same_error_gap", type=float, default=5.0, help="Time gap to ignore nearby anomalies (default: 5.0 s).")
     parser.add_argument('--verbose', action='store_true', default=False, help="More detailed output (default: false).")
     parser.add_argument('--harvester', action='store_true', default=False, help="Output pure timestamps for harvester (default: false).")
     return parser.parse_args()
@@ -74,7 +74,7 @@ def rms_dbfs(signal):
 def true_peak_dbfs(signal):
     return 20 * np.log10(np.max(np.abs(signal))) if np.max(np.abs(signal)) > 0 else -np.inf
 
-def analyze_audio(input_files, threshold, threshold_time_gap, verbose, harvester):
+def analyze_audio(input_files, threshold, same_error_gap, verbose, harvester):
     """
     Analysiert die Audiodaten und erkennt Anomalien basierend auf großen spektralen Unterschieden.
     """
@@ -161,7 +161,7 @@ def analyze_audio(input_files, threshold, threshold_time_gap, verbose, harvester
                 anomalies.append((time_point, formatted_time, diff_value))
 
     if anomalies:
-        anomalies = filter_nearby_anomalies(anomalies, threshold_time_gap)
+        anomalies = filter_nearby_anomalies(anomalies, same_error_gap)
 
     if anomalies:
         if harvester:
@@ -188,7 +188,7 @@ def analyze_audio(input_files, threshold, threshold_time_gap, verbose, harvester
                 print(f"Max spectral difference: {max_diff:.2f} dB")
             print("No significant anomalies detected.")
 
-def filter_nearby_anomalies(anomalies, threshold_time_gap):
+def filter_nearby_anomalies(anomalies, same_error_gap):
     """
     Identifiziert die größte Spektral-Differenz innerhalb benachbarter Anomalien und gibt diese als Anomalie aus.
     """
@@ -196,7 +196,7 @@ def filter_nearby_anomalies(anomalies, threshold_time_gap):
     last_time = -float('inf')  # Initialer Vergleichszeitpunkt
     current_window = []  # Liste von Anomalien im aktuellen Zeitfenster
     for anomaly in anomalies:
-        if anomaly[0] - last_time <= threshold_time_gap:
+        if anomaly[0] - last_time <= same_error_gap:
             # Anomalie gehört zum aktuellen Zeitfenster
             current_window.append(anomaly)
         else:
@@ -233,7 +233,7 @@ if __name__ == "__main__":
         if args.verbose and not args.harvester:
             pathwofilename, filename = os.path.split(args.input_file[0])
             print(f"{filename}")
-        analyze_audio(args.input_file, args.threshold, args.threshold_time_gap, args.verbose, args.harvester)
+        analyze_audio(args.input_file, args.threshold, args.same_error_gap, args.verbose, args.harvester)
         sys.exit(0)
     except Exception as e:
         # Ausgabe Fehler-Stacktrace inklusive der fehlerhaften Zeile

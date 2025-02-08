@@ -260,6 +260,8 @@ if __name__ == "__main__":
         analyze_audio(args.input_file, args.threshold, args.same_error_gap, args.peak_burst, args.peak_silence, args.verbose, args.harvester)
         sys.exit(0)
     except Exception as e:
-        # Ausgabe Fehler-Stacktrace inklusive der fehlerhaften Zeile
-        print(traceback.format_exc())
+        if args.verbose:
+            print(traceback.format_exc())  # Voller Stacktrace nur in verbose mode
+        else:
+            print(f"Error: {e}")  # Standard: Nur die kurze Fehlermeldung
         sys.exit(1)

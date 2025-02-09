@@ -48,7 +48,7 @@ def parse_arguments():
     parser.add_argument("--burst_diff", type=float, default=6.0, metavar="", help="left right peak difference (dB) for burst")
     parser.add_argument("--peak_silence", type=float, default=-80.0, metavar="", help="level (dBFS) where silence is detected")
     parser.add_argument("-v", "--verbose", action="store_true", help="enable detailed output")
-    parser.add_argument("-H", "--harvester", action="store_true", help="output pure timestamps for harvester")
+    parser.add_argument("-H", "--harvester", action="store_true", help="result report for harvester")
 
     return parser.parse_args()
 

@@ -1,6 +1,7 @@
 *.txt
 *.json
 *.zip
+*.log
 __pycache__/*
 
 # files and folder created by pyinstaller
@@ -19,4 +20,4 @@ pyvenv.cfg
 corr_tester.py
 modules-to-uninstall.py
 test-burst-folder.sh
-
+*.sh

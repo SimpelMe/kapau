@@ -21,3 +21,9 @@ corr_tester.py
 modules-to-uninstall.py
 test-burst-folder.sh
 *.sh
+kapau
+*.so
+kapau.pyx
+*.c
+python_libs/*
+setup.py

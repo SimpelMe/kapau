@@ -36,6 +36,60 @@ options:
   -H, --harvester    result report for harvester (default: False)
 ```
 
+## Results
+
+If there is nothing wrong with the audio file you will get an `exit 0` and the following message:
+
+```
+No significant anomalies detected.
+```
+
+If there are errors kapau `exit 23` and writes a list of affected timestamps:
+
+```
+0:00:11
+0:00:22
+0:00:31
+```
+
+### Option --verbose
+
+If nothing is wrong the more detailed message looks like:
+
+```
+audio-file.wav
+Max spectral difference: 34.70 dB
+No significant anomalies detected.
+```
+
+Otherwise you will get a broader view of measurements:
+
+```
+audio-file.wav
+Max spectral difference: 72.04 dB
+h:mm:ss  Anomaly  Ch     Diff   Corr   Peak L  Peak R  RMS L   RMS R
+0:00:11  Burst    Left   72.04  0.00   -0.02   -29.98  -4.69   -37.20
+0:00:22  Silence  Right  61.94  0.00   -29.98  -inf    -37.10  -inf
+0:00:31           Right  62.00  0.00   -31.27  -10.53  -40.00  -22.00
+```
+
+### Option --harvester
+
+If everything is fine the output is plain:
+
+```
+0
+```
+
+Otherwise you get a message and the affected timestamps:
+
+```
+Fehler im Audio detektiert bei:
+0:00:11
+0:00:22
+0:00:31
+```
+
 ## License
 
 MIT License (c) 2025 Simpel
